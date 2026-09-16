@@ -1,0 +1,70 @@
+@model AccountProfileViewModel
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+                <div class="bg-navy p-4 text-white d-flex align-items-center gap-3">
+                    <div class="user-avatar rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold fs-2" style="width: 70px; height: 70px;">
+                        @(string.IsNullOrWhiteSpace(Model.FullName) ? "U" : Model.FullName[0].ToString().ToUpper())
+                    </div>
+                    <div>
+                        <h3 class="fw-bold text-white mb-0">@Model.FullName</h3>
+                        <div class="text-white-50">Update your account details securely</div>
+                    </div>
+                </div>
+
+                <div class="card-body p-4 p-md-5">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                    <form asp-controller="Account" asp-action="Profile" method="post">
+                        <h5 class="fw-bold text-navy mb-3"><i class="bi bi-person me-2"></i>Personal information</h5>
+                        <div class="mb-4">
+                            <label asp-for="FullName" class="form-label fw-semibold"></label>
+                            <input asp-for="FullName" class="form-control rounded-3" autocomplete="name" />
+                            <span asp-validation-for="FullName" class="text-danger small"></span>
+                        </div>
+
+                        <h5 class="fw-bold text-navy mb-3"><i class="bi bi-shield-lock me-2"></i>Change password</h5>
+                        <p class="text-muted small">Leave all password fields empty if you only want to change your name.</p>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label asp-for="CurrentPassword" class="form-label fw-semibold"></label>
+                                <input asp-for="CurrentPassword" class="form-control rounded-3" autocomplete="current-password" />
+                                <span asp-validation-for="CurrentPassword" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="NewPassword" class="form-label fw-semibold"></label>
+                                <input asp-for="NewPassword" class="form-control rounded-3" autocomplete="new-password" />
+                                <span asp-validation-for="NewPassword" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="ConfirmNewPassword" class="form-label fw-semibold"></label>
+                                <input asp-for="ConfirmNewPassword" class="form-control rounded-3" autocomplete="new-password" />
+                                <span asp-validation-for="ConfirmNewPassword" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-3">
+                            <button type="submit" class="btn btn-primary rounded-pill px-4">
+                                <i class="bi bi-check2-circle me-1"></i> Save Changes
+                            </button>
+                            <a asp-controller="Claims" asp-action="MyClaims" class="btn btn-outline-secondary rounded-pill px-4">
+                                <i class="bi bi-file-earmark-check me-1"></i> View My Claims
+                            </a>
+                            <a asp-controller="Items" asp-action="Index" class="btn btn-light rounded-pill px-4">
+                                Browse Catalog
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

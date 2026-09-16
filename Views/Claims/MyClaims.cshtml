@@ -1,0 +1,171 @@
+@model IEnumerable<Claim>
+@{
+    ViewData["Title"] = "My Ownership Claims";
+}
+
+<div class="container mt-4">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">My Submitted Claims</h2>
+            <p class="text-muted mb-0">Track the verification status of your property claims</p>
+        </div>
+        <a asp-controller="Items" asp-action="Index" class="btn btn-outline-primary rounded-pill px-4">
+            <i class="bi bi-search me-1"></i> Browse Catalog
+        </a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5 bg-white rounded-4 shadow-sm">
+            <i class="bi bi-file-earmark-check display-3 text-muted"></i>
+            <h4 class="mt-3 fw-bold">No ownership claims submitted yet</h4>
+            <p class="text-muted">When you spot a found item in the catalog that belongs to you, submit a claim with proof of ownership.</p>
+            <a asp-controller="Items" asp-action="Index" class="btn btn-primary rounded-pill px-4 mt-2">
+                Browse Found Items
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Item Title</th>
+                            <th>Campus Area</th>
+                            <th>Submitted Proof</th>
+                            <th>Claim Date</th>
+                            <th>Status</th>
+                            <th>Reviewer Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var claim in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-3">
+                                        @if (!string.IsNullOrEmpty(claim.Item?.ImagePath))
+                                        {
+                                            <img src="@claim.Item.ImagePath" alt="Item" class="rounded-3 object-fit-cover" style="width: 50px; height: 50px;" />
+                                        }
+                                        else
+                                        {
+                                            <div class="bg-light rounded-3 d-flex align-items-center justify-content-center text-muted" style="width: 50px; height: 50px;">
+                                                <i class="bi bi-box"></i>
+                                            </div>
+                                        }
+                                        <div>
+                                            <a asp-controller="Items" asp-action="Details" asp-route-id="@claim.ItemId" class="fw-bold text-dark text-decoration-none">
+                                                @(claim.Item?.Title ?? "Item")
+                                            </a>
+                                            <div class="small text-muted">Category: @(claim.Item?.Category?.Name ?? "General")</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <i class="bi bi-geo-alt me-1 text-primary"></i>@(claim.Item?.Location?.Name ?? "Campus")
+                                </td>
+                                <td>
+                                    <div class="small text-muted" style="max-width: 250px; white-space: pre-wrap;">@claim.ProofOfOwnership</div>
+                                </td>
+                                <td>@claim.ClaimDate.ToString("MMM dd, yyyy")</td>
+                                <td>
+                                    @if (claim.Status == ClaimStatus.Pending)
+                                    {
+                                        <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
+                                            <i class="bi bi-hourglass-split me-1"></i> Pending Verification
+                                        </span>
+                                    }
+                                    else if (claim.Status == ClaimStatus.Approved)
+                                    {
+                                        <span class="badge bg-success rounded-pill px-3 py-2">
+                                            <i class="bi bi-check-circle-fill me-1"></i> Claim Approved!
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger rounded-pill px-3 py-2">
+                                            <i class="bi bi-x-circle-fill me-1"></i> Claim Denied
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    <small class="text-muted">
+                                        @(string.IsNullOrEmpty(claim.AdminOrFinderNotes) ? "Awaiting desk review" : claim.AdminOrFinderNotes)
+                                    </small>
+                                </td>
+                            </tr>
+                            @if (claim.Status == ClaimStatus.Approved)
+                            {
+                                <tr class="table-success">
+                                    <td colspan="6">
+                                        <div class="p-3 rounded-3 bg-success bg-opacity-10">
+                                            <h6 class="fw-bold text-success mb-2">
+                                                <i class="bi bi-box-arrow-in-down me-1"></i> Collection & Reward Details
+                                            </h6>
+                                            <div class="row g-3 small">
+                                                <div class="col-md-4">
+                                                    <strong class="d-block">Collection arrangement</strong>
+                                                    @if (claim.Item?.ItemType == ItemType.Lost)
+                                                    {
+                                                        <span>Collect it from the finder at the location they provided below.</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span>Collect it from the finder at the location provided below.</span>
+                                                    }
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <strong class="d-block">Contact the finder</strong>
+                                                    @if (claim.Item?.ItemType == ItemType.Lost)
+                                                    {
+                                                        <strong class="d-block">@claim.ClaimerUser?.FullName</strong>
+                                                        @if (!string.IsNullOrWhiteSpace(claim.ClaimerUser?.Email))
+                                                        {
+                                                            <a href="mailto:@claim.ClaimerUser.Email">@claim.ClaimerUser.Email</a>
+                                                        }
+                                                        @if (!string.IsNullOrWhiteSpace(claim.ContactPhoneNumber))
+                                                        {
+                                                            <span class="d-block">@claim.ContactPhoneNumber</span>
+                                                        }
+                                                    }
+                                                    else if (!string.IsNullOrWhiteSpace(claim.Item?.ContactEmail))
+                                                    {
+                                                        <a href="mailto:@claim.Item.ContactEmail">@claim.Item.ContactEmail</a>
+                                                    }
+                                                    @if (claim.Item?.ItemType != ItemType.Lost && !string.IsNullOrWhiteSpace(claim.Item?.ContactPhone))
+                                                    {
+                                                        <span class="d-block">@claim.Item.ContactPhone</span>
+                                                    }
+                                                    @if (claim.Item?.ItemType != ItemType.Lost && string.IsNullOrWhiteSpace(claim.Item?.ContactEmail) && string.IsNullOrWhiteSpace(claim.Item?.ContactPhone))
+                                                    {
+                                                        <span>Use the campus office for assistance.</span>
+                                                    }
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <strong class="d-block">Reward promised</strong>
+                                                    <span>@(claim.Item?.ItemType == ItemType.Lost && !string.IsNullOrWhiteSpace(claim.Item?.RewardDetails)
+                                                        ? claim.Item.RewardDetails
+                                                        : "No reward was specified.")</span>
+                                                </div>
+                                            </div>
+                                            @if (!string.IsNullOrWhiteSpace(claim.AdminOrFinderNotes))
+                                            {
+                                                <div class="mt-3 pt-3 border-top border-success border-opacity-25">
+                                                    <strong class="d-block">@(claim.Item?.ItemType == ItemType.Lost ? "Finder collection location and instructions" : "Finder / office collection instructions")</strong>
+                                                    <span style="white-space: pre-line;">@claim.AdminOrFinderNotes</span>
+                                                </div>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

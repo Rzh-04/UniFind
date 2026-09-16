@@ -1,0 +1,208 @@
+@model ItemFilterViewModel
+@{
+    ViewData["Title"] = "Browse Campus Lost & Found Catalog";
+}
+
+<div class="container mt-4">
+    <!-- Header Title & Report CTA -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Campus Lost & Found Catalog</h2>
+            <p class="text-muted mb-0">
+                @(Model.ShowingMyReports ? "Your lost and found reports" : "Search and filter items reported across university grounds")
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-controller="Items" asp-action="Create" asp-route-type="1" class="btn btn-emerald rounded-pill px-3">
+                <i class="bi bi-plus-circle me-1"></i> Report Lost
+            </a>
+            <a asp-controller="Items" asp-action="Create" asp-route-type="2" class="btn btn-outline-amber rounded-pill px-3">
+                <i class="bi bi-geo-alt me-1"></i> Report Found
+            </a>
+        </div>
+    </div>
+
+    @if (Model.CurrentUserId != null)
+    {
+        <div class="report-legend d-flex flex-wrap align-items-center gap-3 mb-4 p-3 rounded-4">
+            <span class="small fw-bold text-muted me-1">Post key:</span>
+            <span class="legend-item legend-my-lost"><i class="bi bi-exclamation-diamond-fill"></i> Your lost report</span>
+            <span class="legend-item legend-my-found"><i class="bi bi-geo-alt-fill"></i> Your found report</span>
+            <span class="legend-item legend-community"><i class="bi bi-people-fill"></i> Community post</span>
+            @if (!Model.ShowingMyReports)
+            {
+                <a asp-controller="Items" asp-action="Index" asp-route-myReports="true" class="btn btn-sm btn-outline-primary rounded-pill ms-md-auto">
+                    <i class="bi bi-person-lines-fill me-1"></i> Show My Reports
+                </a>
+            }
+            else
+            {
+                <a asp-controller="Items" asp-action="Index" class="btn btn-sm btn-outline-secondary rounded-pill ms-md-auto">
+                    <i class="bi bi-grid me-1"></i> Show All Posts
+                </a>
+            }
+        </div>
+    }
+
+    <!-- Compact reference-style search and filter bar -->
+    <div class="catalog-filter-shell mb-4">
+        <form asp-controller="Items" asp-action="Index" method="get" class="catalog-filter-bar">
+            <div class="catalog-search-field">
+                <i class="bi bi-search"></i>
+                <input type="text" name="searchTerm" value="@Model.SearchTerm" placeholder="Search for items (e.g. phone, bag, book...)" aria-label="Search items" />
+            </div>
+            <div class="catalog-filter-field">
+                <i class="bi bi-box-seam"></i>
+                <label for="catalogType">Type</label>
+                <select id="catalogType" name="itemType">
+                    <option value="">All Types</option>
+                    <option value="@ItemType.Lost" selected="@(Model.ItemType == ItemType.Lost)">Lost</option>
+                    <option value="@ItemType.Found" selected="@(Model.ItemType == ItemType.Found)">Found</option>
+                </select>
+            </div>
+            <div class="catalog-filter-field">
+                <i class="bi bi-grid"></i>
+                <label for="catalogCategory">Category</label>
+                <select id="catalogCategory" name="categoryId">
+                    <option value="">All Categories</option>
+                    @foreach (var cat in Model.Categories)
+                    {
+                        <option value="@cat.Id" selected="@(Model.CategoryId == cat.Id)">@cat.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="catalog-filter-field">
+                <i class="bi bi-geo-alt"></i>
+                <label for="catalogLocation">Location</label>
+                <select id="catalogLocation" name="locationId">
+                    <option value="">All Locations</option>
+                    @foreach (var loc in Model.Locations)
+                    {
+                        <option value="@loc.Id" selected="@(Model.LocationId == loc.Id)">@loc.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="catalog-filter-field catalog-date-field">
+                <i class="bi bi-calendar3"></i>
+                <label for="catalogSort">Sort</label>
+                <select id="catalogSort" name="sortOrder">
+                    <option value="newest" selected="@(Model.SortOrder == "newest")">Newest</option>
+                    <option value="oldest" selected="@(Model.SortOrder == "oldest")">Oldest</option>
+                    <option value="date_desc" selected="@(Model.SortOrder == "date_desc")">Date newest</option>
+                    <option value="date_asc" selected="@(Model.SortOrder == "date_asc")">Date oldest</option>
+                </select>
+            </div>
+            @if (Model.Status.HasValue)
+            {
+                <input type="hidden" name="status" value="@Model.Status" />
+            }
+            <input type="hidden" name="myReports" value="@Model.ShowingMyReports" />
+            <button type="submit" class="catalog-search-button"><i class="bi bi-arrow-right"></i><span>Search</span></button>
+            <a asp-controller="Items" asp-action="Index" class="catalog-reset-button" title="Clear filters" aria-label="Clear filters"><i class="bi bi-arrow-counterclockwise"></i></a>
+        </form>
+    </div>
+
+    <!-- Items Grid -->
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <span class="text-muted small">Showing <strong>@Model.TotalCount</strong> items</span>
+    </div>
+
+    @if (!Model.Items.Any())
+    {
+        <div class="text-center py-5 bg-white rounded-4 shadow-sm my-4">
+            <i class="bi bi-search display-3 text-muted"></i>
+            <h4 class="mt-3 fw-bold">No matching items found</h4>
+            <p class="text-muted">Try adjusting your filters or search keywords to find what you are looking for.</p>
+            <a asp-controller="Items" asp-action="Index" class="btn btn-outline-primary rounded-pill px-4 mt-2">
+                Reset All Filters
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var item in Model.Items)
+            {
+                var isMyReport = Model.CurrentUserId != null && item.UserId == Model.CurrentUserId;
+                var reportClass = isMyReport
+                    ? (item.ItemType == ItemType.Lost ? "my-lost-card" : "my-found-card")
+                    : "community-card";
+                <div class="col-md-6 col-lg-4">
+                    <div class="card card-hover @reportClass h-100 border-0 shadow-sm overflow-hidden bg-white">
+                        <div class="item-img-container">
+                            @if (!string.IsNullOrEmpty(item.ImagePath))
+                            {
+                                <img src="@item.ImagePath" alt="@item.Title" loading="lazy" />
+                            }
+                            else
+                            {
+                                <div class="item-img-placeholder">
+                                    <i class="bi @(item.Category?.IconClass ?? "bi-box") fs-1"></i>
+                                    <span class="small mt-1 text-muted">No photo</span>
+                                </div>
+                            }
+                            <div class="position-absolute top-0 start-0 m-3 d-flex gap-2">
+                                @if (isMyReport)
+                                {
+                                    <span class="badge badge-mine rounded-pill px-3 py-2 fw-semibold">
+                                        <i class="bi bi-person-fill me-1"></i> YOUR @(item.ItemType == ItemType.Lost ? "LOST" : "FOUND") REPORT
+                                    </span>
+                                }
+                                else if (item.ItemType == ItemType.Lost)
+                                {
+                                    <span class="badge badge-lost rounded-pill px-3 py-2 fw-semibold">
+                                        <i class="bi bi-exclamation-diamond me-1"></i> LOST
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-found rounded-pill px-3 py-2 fw-semibold">
+                                        <i class="bi bi-geo-alt-fill me-1"></i> FOUND
+                                    </span>
+                                }
+
+                                @if (item.Status == ItemStatus.Claimed)
+                                {
+                                    <span class="badge badge-claimed rounded-pill px-3 py-2 fw-semibold">
+                                        Under Claim Review
+                                    </span>
+                                }
+                                else if (item.Status == ItemStatus.Resolved || item.Status == ItemStatus.Returned)
+                                {
+                                    <span class="badge badge-resolved rounded-pill px-3 py-2 fw-semibold">
+                                        Resolved
+                                    </span>
+                                }
+                            </div>
+                            @if (!isMyReport)
+                            {
+                                <span class="community-label position-absolute bottom-0 end-0 m-3">
+                                    <i class="bi bi-people-fill me-1"></i> Community post
+                                </span>
+                            }
+                        </div>
+                        <div class="card-body d-flex flex-column p-4">
+                            <div class="d-flex align-items-center gap-2 mb-2 text-muted small">
+                                <span><i class="bi bi-folder2 me-1"></i>@(item.Category?.Name ?? "General")</span>
+                                <span>&bull;</span>
+                                <span><i class="bi bi-geo-alt me-1"></i>@(item.Location?.Name ?? "Campus")</span>
+                            </div>
+                            <h5 class="card-title fw-bold text-dark mb-2">@item.Title</h5>
+                            <p class="card-text text-muted small flex-grow-1 text-truncate-2">
+                                @item.Description
+                            </p>
+                            <div class="d-flex align-items-center justify-content-between pt-3 border-top mt-2">
+                                <div class="text-muted small">
+                                    <i class="bi bi-calendar3 me-1"></i> @item.DateLostOrFound.ToString("MMM dd, yyyy")
+                                </div>
+                                <a asp-controller="Items" asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

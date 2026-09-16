@@ -1,0 +1,92 @@
+@model ClaimCreateViewModel
+@{
+    var isLostPost = Model.ItemType == ItemType.Lost;
+    ViewData["Title"] = isLostPost ? "Report Found Item Response" : "Submit Ownership Claim";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden bg-white">
+                <div class="bg-navy p-4 text-white text-center">
+                    <div class="brand-badge rounded-circle bg-emerald text-white d-inline-flex align-items-center justify-content-center mb-2" style="width: 48px; height: 48px;">
+                        <i class="bi @(isLostPost ? "bi-geo-alt-fill" : "bi-shield-check") fs-4"></i>
+                    </div>
+                    <h3 class="fw-bold text-white mb-1">@(isLostPost ? "Tell the owner you found this item" : "Submit Ownership Claim")</h3>
+                    <p class="text-white-50 small mb-0">@(isLostPost ? "Provide details so the person who reported it can verify and arrange a return." : "Provide verifiable proof to claim your found property")</p>
+                </div>
+
+                <div class="card-body p-4 p-md-5">
+                    <!-- Target Found Item Summary Box -->
+                    <div class="p-3 bg-light rounded-3 mb-4 d-flex align-items-center gap-3">
+                        @if (!string.IsNullOrEmpty(Model.ItemImagePath))
+                        {
+                            <img src="@Model.ItemImagePath" alt="Item" class="rounded-3 object-fit-cover" style="width: 70px; height: 70px;" />
+                        }
+                        else
+                        {
+                            <div class="bg-white rounded-3 d-flex align-items-center justify-content-center text-muted" style="width: 70px; height: 70px;">
+                                <i class="bi bi-box fs-3"></i>
+                            </div>
+                        }
+                        <div>
+                            <span class="badge @(isLostPost ? "bg-danger" : "bg-success") rounded-pill px-2 py-1 mb-1">@(isLostPost ? "Lost Item" : "Found Item")</span>
+                            <h5 class="fw-bold mb-0">@Model.ItemTitle</h5>
+                            <small class="text-muted"><i class="bi bi-geo-alt"></i> Location: @Model.ItemLocationName</small>
+                        </div>
+                    </div>
+
+                    <form asp-controller="Claims" asp-action="Create" method="post">
+                        <input type="hidden" asp-for="ItemId" />
+                        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+                        <!-- Proof Description -->
+                        <div class="form-floating mb-3">
+                            <textarea asp-for="ProofOfOwnership" class="form-control rounded-3" style="height: 160px;" placeholder="@(isLostPost ? "Describe where and when you found it, its condition, and how the owner can identify it..." : "Describe internal contents, serial numbers, password patterns...")"></textarea>
+                            <label asp-for="ProofOfOwnership">@(isLostPost ? "Found Item Details" : "Proof of Ownership & Specific Details") <span class="text-danger">*</span></label>
+                            <span asp-validation-for="ProofOfOwnership" class="text-danger small"></span>
+                            <div class="form-text small text-muted mt-1">
+                                <i class="bi bi-lock me-1"></i> @(isLostPost ? "Be specific: mention where and when you found it, identifying marks, and safe handover details." : "Be specific: mention stickers, serial number, lock screen wallpaper, engraved initials, or items inside pockets.")
+                            </div>
+                        </div>
+
+                        @if (isLostPost)
+                        {
+                            <div class="form-floating mb-3">
+                                <input asp-for="CollectionLocation" class="form-control rounded-3" placeholder="e.g. Campus Security Office" />
+                                <label asp-for="CollectionLocation">Where can the owner collect it? <span class="text-danger">*</span></label>
+                                <span asp-validation-for="CollectionLocation" class="text-danger small"></span>
+                                <div class="form-text small text-muted">
+                                    <i class="bi bi-geo-alt me-1"></i> Give a safe, practical handover location.
+                                </div>
+                            </div>
+                            <div class="alert alert-light border rounded-3 small">
+                                <i class="bi bi-gift me-1 text-warning"></i>
+                                <strong>Reward offered:</strong>
+                                @(string.IsNullOrWhiteSpace(Model.ItemRewardDetails) ? "No reward was specified for this lost item." : Model.ItemRewardDetails)
+                            </div>
+                        }
+
+                        <!-- Contact Phone -->
+                        <div class="form-floating mb-4">
+                            <input asp-for="ContactPhoneNumber" class="form-control rounded-3" placeholder="555-0199" />
+                            <label asp-for="ContactPhoneNumber">Contact Phone Number <span class="text-danger">*</span></label>
+                            <span asp-validation-for="ContactPhoneNumber" class="text-danger small"></span>
+                        </div>
+
+                        <div class="d-flex gap-3">
+                            <a asp-controller="Items" asp-action="Details" asp-route-id="@Model.ItemId" class="btn btn-light btn-lg w-50 rounded-pill">Cancel</a>
+                            <button type="submit" class="btn btn-emerald btn-lg w-50 rounded-pill shadow-sm">
+                                @(isLostPost ? "Send Found-Item Details" : "Submit Claim for Verification")
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

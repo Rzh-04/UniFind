@@ -1,0 +1,105 @@
+@model IEnumerable<Item>
+@{
+    ViewData["Title"] = "Campus Items Oversight";
+}
+
+<div class="container mt-4">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Campus Items Administrative Oversight</h2>
+            <p class="text-muted mb-0">Review, update status, or remove reported posts campus-wide</p>
+        </div>
+        <a asp-controller="Admin" asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">
+            <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Title & Category</th>
+                        <th>Type</th>
+                        <th>Location</th>
+                        <th>Reported By</th>
+                        <th>Claims</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                <a asp-controller="Items" asp-action="Details" asp-route-id="@item.Id" class="fw-bold text-dark text-decoration-none">
+                                    @item.Title
+                                </a>
+                                <div class="small text-muted">@(item.Category?.Name ?? "General")</div>
+                            </td>
+                            <td>
+                                @if (item.ItemType == ItemType.Lost)
+                                {
+                                    <span class="badge badge-lost rounded-pill px-2 py-1">LOST</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-found rounded-pill px-2 py-1">FOUND</span>
+                                }
+                            </td>
+                            <td><small class="text-muted">@(item.Location?.Name ?? "Campus")</small></td>
+                            <td>
+                                <small>
+                                    <strong>@(item.User?.FullName ?? "User")</strong><br />
+                                    <span class="text-muted">@item.User?.Email</span>
+                                </small>
+                            </td>
+                            <td>
+                                @if (item.Claims.Any())
+                                {
+                                    <a asp-controller="Items" asp-action="Details" asp-route-id="@item.Id" class="text-decoration-none">
+                                        <span class="badge bg-primary rounded-pill">@item.Claims.Count()</span>
+                                        <small class="d-block text-muted">
+                                            @item.Claims.Count(c => c.Status == ClaimStatus.Pending) pending
+                                        </small>
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">None</span>
+                                }
+                            </td>
+                            <td><small class="text-muted">@item.CreatedAt.ToString("MMM dd, yyyy")</small></td>
+                            <td>
+                                @if (item.Status == ItemStatus.Reported)
+                                {
+                                    <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1">Active</span>
+                                }
+                                else if (item.Status == ItemStatus.Claimed)
+                                {
+                                    <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-2 py-1">In Review</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-2 py-1">Resolved</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="d-flex gap-1">
+                                    <a asp-controller="Items" asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary rounded-pill px-2">
+                                        View
+                                    </a>
+                                    <a asp-controller="Items" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary rounded-pill px-2">
+                                        Edit
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

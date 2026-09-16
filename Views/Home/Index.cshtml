@@ -1,0 +1,155 @@
+@{
+    ViewData["Title"] = "Home - Reuniting Campus Belongings";
+    var recentItems = ViewData["RecentItems"] as IEnumerable<Item> ?? new List<Item>();
+    var categories = ViewData["Categories"] as IEnumerable<Category> ?? new List<Category>();
+    var locations = ViewData["Locations"] as IEnumerable<Location> ?? new List<Location>();
+    var totalItems = (int)(ViewData["TotalItems"] ?? 0);
+    var lostCount = (int)(ViewData["LostCount"] ?? 0);
+    var foundCount = (int)(ViewData["FoundCount"] ?? 0);
+    var resolvedCount = (int)(ViewData["ResolvedCount"] ?? 0);
+}
+
+<div class="container mt-4">
+    <div class="hero-banner p-4 p-md-5 mb-5">
+        <div class="row align-items-center position-relative z-1">
+            <div class="col-lg-7">
+                <span class="badge hero-kicker px-3 py-2 rounded-pill mb-3">
+                    <i class="bi bi-heart-fill me-1"></i> Official Campus Lost & Found
+                </span>
+                <h1 class="display-4 fw-bold mb-3">
+                    Lost something?<br /><span class="hero-accent">Found something?</span>
+                </h1>
+                <p class="lead mb-4">
+                    A simple, trusted place to report belongings, search campus posts, and help return items to the people who own them.
+                </p>
+                <form asp-controller="Items" asp-action="Index" method="get" class="mb-4 home-search-bar">
+                    <div class="home-search-input">
+                        <i class="bi bi-search"></i>
+                        <input type="text" name="searchTerm" placeholder="Search for items (e.g. phone, bag, book...)" aria-label="Search items">
+                    </div>
+                    <div class="home-search-select">
+                        <i class="bi bi-grid"></i>
+                        <select name="categoryId" aria-label="Search by category">
+                            <option value="">All Categories</option>
+                            @foreach (var cat in categories)
+                            {
+                                <option value="@cat.Id">@cat.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="home-search-select">
+                        <i class="bi bi-geo-alt"></i>
+                        <select name="locationId" aria-label="Search by location">
+                            <option value="">All Locations</option>
+                            @foreach (var location in locations)
+                            {
+                                <option value="@location.Id">@location.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <button class="home-search-button" type="submit"><i class="bi bi-arrow-right"></i><span>Search</span></button>
+                </form>
+                <div class="d-flex flex-wrap gap-3">
+                    <a asp-controller="Items" asp-action="Create" asp-route-type="@ItemType.Lost" class="btn btn-emerald btn-lg rounded-pill px-4 shadow-sm">
+                        <i class="bi bi-search-heart me-2"></i> Report Lost Item
+                    </a>
+                    <a asp-controller="Items" asp-action="Create" asp-route-type="@ItemType.Found" class="btn btn-outline-amber btn-lg rounded-pill px-4">
+                        <i class="bi bi-hand-thumbs-up me-2"></i> Report Found Item
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-5 d-none d-lg-block">
+                <div class="finding-illustration rounded-4 position-relative" role="img" aria-label="Illustration of a backpack, phone, keys, student card, and magnifying glass for campus lost and found">
+                    <div class="illustration-glow"></div>
+                    <div class="illustration-backpack"><i class="bi bi-backpack-fill"></i></div>
+                    <div class="illustration-phone"><i class="bi bi-phone-fill"></i></div>
+                    <div class="illustration-keys"><i class="bi bi-key-fill"></i></div>
+                    <div class="illustration-card"><i class="bi bi-person-vcard-fill"></i></div>
+                    <div class="illustration-search"><i class="bi bi-search"></i></div>
+                    <div class="illustration-arrow"><i class="bi bi-arrow-return-right"></i></div>
+                    <div class="illustration-note"><i class="bi bi-heart-fill me-1"></i><strong>@resolvedCount+</strong> items reunited</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-6 col-lg-3">
+            <a class="stat-card-link" asp-controller="Items" asp-action="Index" asp-route-status="@ItemStatus.Reported">
+                <div class="stat-card d-flex align-items-center gap-3"><div class="stat-icon bg-primary bg-opacity-10 text-primary"><i class="bi bi-collection"></i></div><div><h3 class="fw-bold mb-0">@totalItems</h3><div class="text-muted small">Total Reported</div></div></div>
+            </a>
+        </div>
+        <div class="col-6 col-lg-3">
+            <a class="stat-card-link" asp-controller="Items" asp-action="Index" asp-route-itemType="@ItemType.Lost" asp-route-status="@ItemStatus.Reported">
+                <div class="stat-card d-flex align-items-center gap-3"><div class="stat-icon bg-danger bg-opacity-10 text-danger"><i class="bi bi-exclamation-circle"></i></div><div><h3 class="fw-bold mb-0">@lostCount</h3><div class="text-muted small">Active Lost Posts</div></div></div>
+            </a>
+        </div>
+        <div class="col-6 col-lg-3">
+            <a class="stat-card-link" asp-controller="Items" asp-action="Index" asp-route-itemType="@ItemType.Found" asp-route-status="@ItemStatus.Reported">
+                <div class="stat-card d-flex align-items-center gap-3"><div class="stat-icon bg-emerald bg-opacity-10 text-emerald"><i class="bi bi-check2-circle"></i></div><div><h3 class="fw-bold mb-0">@foundCount</h3><div class="text-muted small">Active Found Posts</div></div></div>
+            </a>
+        </div>
+        <div class="col-6 col-lg-3">
+            <a class="stat-card-link" asp-controller="Items" asp-action="Index" asp-route-status="@ItemStatus.Resolved">
+                <div class="stat-card d-flex align-items-center gap-3"><div class="stat-icon bg-warning bg-opacity-10 text-warning"><i class="bi bi-arrow-return-left"></i></div><div><h3 class="fw-bold mb-0">@resolvedCount</h3><div class="text-muted small">Returned to Owners</div></div></div>
+            </a>
+        </div>
+    </div>
+
+    <div class="trust-strip row g-0 align-items-center mb-5">
+        <div class="col-md-3 trust-item"><i class="bi bi-shield-check"></i><div><strong>Safe & Secure</strong><small>Verified users and reports</small></div></div>
+        <div class="col-md-3 trust-item"><i class="bi bi-people"></i><div><strong>University Community</strong><small>Students, staff & faculty</small></div></div>
+        <div class="col-md-3 trust-item"><i class="bi bi-clock"></i><div><strong>Quick & Easy</strong><small>Report and find in minutes</small></div></div>
+        <div class="col-md-3 trust-item"><i class="bi bi-heart"></i><div><strong>Help Each Other</strong><small>A stronger campus together</small></div></div>
+    </div>
+
+    <section class="row g-4 align-items-stretch mb-5">
+        <div class="col-lg-4">
+            <div class="return-path-card rounded-4 shadow-sm h-100 p-4">
+                <div class="return-path-icon"><i class="bi bi-box-arrow-in-left"></i></div>
+                <h4 class="fw-bold mt-4">Every item has a way home.</h4>
+                <p class="text-muted mb-0">Use specific details to help the right owner recognize their belongings and arrange a safe return.</p>
+                <div class="return-path-items mt-4"><span><i class="bi bi-key-fill"></i> Keys</span><span><i class="bi bi-phone-fill"></i> Phones</span><span><i class="bi bi-backpack-fill"></i> Bags</span><span><i class="bi bi-person-vcard-fill"></i> IDs</span></div>
+            </div>
+        </div>
+        <div class="col-lg-8">
+            <div class="how-it-works-card rounded-4 p-4 p-md-5 h-100">
+                <span class="section-kicker"><i class="bi bi-compass me-1"></i> Simple campus recovery</span>
+                <h2 class="fw-bold mt-2 mb-3">Find it. Report it. Return it.</h2>
+                <p class="text-muted mb-4">A clear path for every lost item, whether you are searching for your belongings or helping someone else get theirs back.</p>
+                <div class="row g-4">
+                    <div class="col-md-4"><span class="step-number mb-3">1</span><h6 class="fw-bold">Search the catalog</h6><p class="small text-muted mb-0">Filter by type, category, location, and date.</p></div>
+                    <div class="col-md-4"><span class="step-number mb-3">2</span><h6 class="fw-bold">Post with details</h6><p class="small text-muted mb-0">Add a photo and useful identifying information.</p></div>
+                    <div class="col-md-4"><span class="step-number mb-3">3</span><h6 class="fw-bold">Verify ownership</h6><p class="small text-muted mb-0">Submit private proof before arranging pickup.</p></div>
+                </div>
+                <div class="d-flex flex-wrap gap-2 mt-4">
+                    <a asp-controller="Items" asp-action="Create" asp-route-type="@ItemType.Lost" class="btn btn-emerald rounded-pill px-4"><i class="bi bi-search-heart me-1"></i> I lost something</a>
+                    <a asp-controller="Items" asp-action="Create" asp-route-type="@ItemType.Found" class="btn btn-outline-amber rounded-pill px-4"><i class="bi bi-hand-thumbs-up me-1"></i> I found something</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="d-flex align-items-center justify-content-between mb-4"><div><h2 class="fw-bold mb-1">Browse by Category</h2><p class="text-muted mb-0">Find common campus belongings faster</p></div><a asp-controller="Items" asp-action="Index" class="btn btn-link text-accent fw-semibold text-decoration-none">View All <i class="bi bi-arrow-right"></i></a></div>
+    <div class="row g-3 mb-5">
+        @foreach (var cat in categories)
+        {
+            <div class="col-6 col-md-4 col-lg-3"><a asp-controller="Items" asp-action="Index" asp-route-categoryId="@cat.Id" class="text-decoration-none"><div class="card card-hover border-0 shadow-sm p-3 category-card h-100 bg-white"><div class="d-flex align-items-center gap-3"><div class="category-icon-box"><i class="bi @cat.IconClass"></i></div><div><h6 class="fw-bold text-dark mb-0">@cat.Name</h6><span class="badge bg-light text-secondary rounded-pill mt-1">Explore</span></div></div></div></a></div>
+        }
+    </div>
+
+    <div class="d-flex align-items-center justify-content-between mb-4"><div><h2 class="fw-bold mb-1">Recently Reported Items</h2><p class="text-muted mb-0">The latest belongings reported around campus</p></div><a asp-controller="Items" asp-action="Index" class="btn btn-outline-primary rounded-pill px-4">Browse All Items</a></div>
+    @if (!recentItems.Any())
+    {
+        <div class="text-center py-5 bg-white rounded-4 shadow-sm"><i class="bi bi-box-seam display-3 text-muted"></i><h4 class="mt-3 fw-bold">No active posts yet</h4><p class="text-muted">Be the first to report a lost or found item on campus!</p><a asp-controller="Items" asp-action="Create" class="btn btn-primary rounded-pill px-4 mt-2">Report Item Now</a></div>
+    }
+    else
+    {
+        <div class="row g-4 mb-5">
+            @foreach (var item in recentItems)
+            {
+                <div class="col-md-6 col-lg-4"><div class="card card-hover h-100 border-0 shadow-sm overflow-hidden bg-white"><div class="item-img-container">@if (!string.IsNullOrEmpty(item.ImagePath)){<img src="@item.ImagePath" alt="@item.Title" loading="lazy" />}else{<div class="item-img-placeholder"><i class="bi @(item.Category?.IconClass ?? "bi-box") fs-1"></i><span class="small mt-1 text-muted">No photo uploaded</span></div>}<div class="position-absolute top-0 start-0 m-3">@if (item.ItemType == ItemType.Lost){<span class="badge badge-lost rounded-pill px-3 py-2 fw-semibold"><i class="bi bi-exclamation-diamond me-1"></i> LOST</span>}else{<span class="badge badge-found rounded-pill px-3 py-2 fw-semibold"><i class="bi bi-geo-alt-fill me-1"></i> FOUND</span>}</div></div><div class="card-body d-flex flex-column p-4"><div class="d-flex align-items-center gap-2 mb-2 text-muted small"><span><i class="bi bi-folder2 me-1"></i>@(item.Category?.Name ?? "General")</span><span>&bull;</span><span><i class="bi bi-geo-alt me-1"></i>@(item.Location?.Name ?? "Campus")</span></div><h5 class="card-title fw-bold text-dark mb-2">@item.Title</h5><p class="card-text text-muted small flex-grow-1 text-truncate-2">@item.Description</p><div class="d-flex align-items-center justify-content-between pt-3 border-top mt-2"><div class="text-muted small"><i class="bi bi-calendar3 me-1"></i> @item.DateLostOrFound.ToString("MMM dd, yyyy")</div><a asp-controller="Items" asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary rounded-pill px-3">View Details</a></div></div></div></div>
+            }
+        </div>
+    }
+</div>

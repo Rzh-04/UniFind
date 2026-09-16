@@ -1,0 +1,295 @@
+@model Item
+@{
+    ViewData["Title"] = Model.Title;
+    var isOwnerOrAdmin = (bool)(ViewData["IsOwnerOrAdmin"] ?? false);
+    var hasAlreadyClaimed = (bool)(ViewData["HasAlreadyClaimed"] ?? false);
+}
+
+<div class="container mt-4">
+    <!-- Breadcrumbs -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Items" asp-action="Index">Catalog</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@Model.Title</li>
+        </ol>
+    </nav>
+
+    <div class="row g-4">
+        <!-- Image & Photo Column -->
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+                <div class="position-relative" style="min-height: 300px; max-height: 450px; background: #f8fafc;">
+                    @if (!string.IsNullOrEmpty(Model.ImagePath))
+                    {
+                        <img src="@Model.ImagePath" alt="@Model.Title" class="w-100 h-100 object-fit-cover" style="max-height: 420px;" />
+                    }
+                    else
+                    {
+                        <div class="d-flex flex-column align-items-center justify-content-center py-5 text-muted h-100">
+                            <i class="bi @(Model.Category?.IconClass ?? "bi-box") display-1"></i>
+                            <p class="mt-2 mb-0 text-muted">No photo uploaded for this item</p>
+                        </div>
+                    }
+                    <div class="position-absolute top-0 start-0 m-3 d-flex gap-2">
+                        @if (Model.ItemType == ItemType.Lost)
+                        {
+                            <span class="badge badge-lost rounded-pill px-3 py-2 fs-6 fw-semibold shadow-sm">
+                                <i class="bi bi-exclamation-diamond me-1"></i> LOST ITEM
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-found rounded-pill px-3 py-2 fs-6 fw-semibold shadow-sm">
+                                <i class="bi bi-geo-alt-fill me-1"></i> FOUND ITEM
+                            </span>
+                        }
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.RewardDetails))
+                {
+                    <div class="bg-amber bg-opacity-10 border-top border-warning p-3 d-flex align-items-center gap-2">
+                        <i class="bi bi-gift-fill fs-4 text-warning"></i>
+                        <div>
+                            <strong class="text-warning-emphasis d-block">Reward / Special Notes</strong>
+                            <small class="text-muted">@Model.RewardDetails</small>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Details & Claim Actions Column -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white h-100 d-flex flex-column">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-semibold mb-2">
+                            <i class="bi @(Model.Category?.IconClass ?? "bi-tag") me-1"></i> @(Model.Category?.Name ?? "General")
+                        </span>
+                        @if (isOwnerOrAdmin && Model.UserId == (string?)User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value)
+                        {
+                            <span class="badge badge-mine px-3 py-2 rounded-pill fw-semibold mb-2">
+                                <i class="bi bi-person-fill me-1"></i> Your Report
+                            </span>
+                        }
+                        <h2 class="fw-bold mb-1 text-dark">@Model.Title</h2>
+                    </div>
+
+                    <div>
+                        @if (Model.Status == ItemStatus.Reported)
+                        {
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 rounded-pill">
+                                Active Listing
+                            </span>
+                        }
+                        else if (Model.Status == ItemStatus.Claimed)
+                        {
+                            <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-3 py-2 rounded-pill">
+                                Under Claim Review
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary border px-3 py-2 rounded-pill">
+                                Resolved / Returned
+                            </span>
+                        }
+                    </div>
+                </div>
+
+                <!-- Meta Attributes -->
+                <div class="row g-3 mb-4 py-3 bg-light rounded-3">
+                    <div class="col-sm-6">
+                        <div class="d-flex align-items-center gap-2 text-muted">
+                            <i class="bi bi-geo-alt fs-5 text-primary"></i>
+                            <div>
+                                <small class="d-block text-muted">Campus Location</small>
+                                <strong>@(Model.Location?.Name ?? "Campus Grounds")</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="d-flex align-items-center gap-2 text-muted">
+                            <i class="bi bi-calendar-event fs-5 text-emerald"></i>
+                            <div>
+                                <small class="d-block text-muted">Date Lost / Found</small>
+                                <strong>@Model.DateLostOrFound.ToString("MMMM dd, yyyy")</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="mb-4 flex-grow-1">
+                    <h5 class="fw-bold text-navy mb-2">Description & Details</h5>
+                    <p class="text-muted leading-relaxed" style="white-space: pre-line;">
+                        @Model.Description
+                    </p>
+                </div>
+
+                <!-- Contact & Reporter Info -->
+                <div class="p-3 border rounded-3 mb-4 bg-white">
+                    <h6 class="fw-bold text-muted mb-2">Contact & Reporter Information</h6>
+                    <div class="row g-2 text-muted small">
+                        <div class="col-sm-6">
+                            <i class="bi bi-person me-1"></i> Reported by: <strong>@(Model.User?.FullName ?? "Campus User")</strong>
+                        </div>
+                        @if (!string.IsNullOrEmpty(Model.ContactEmail))
+                        {
+                            <div class="col-sm-6">
+                                <i class="bi bi-envelope me-1"></i> Email: <a href="mailto:@Model.ContactEmail" class="text-accent">@Model.ContactEmail</a>
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.ContactPhone))
+                        {
+                            <div class="col-sm-6">
+                                <i class="bi bi-telephone me-1"></i> Phone: <strong>@Model.ContactPhone</strong>
+                            </div>
+                        }
+                        <div class="col-sm-6">
+                            <i class="bi bi-clock me-1"></i> Posted on: @Model.CreatedAt.ToString("MMM dd, yyyy HH:mm")
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-flex flex-wrap gap-2 pt-3 border-top">
+                    @if ((Model.ItemType == ItemType.Found || Model.ItemType == ItemType.Lost) && Model.Status != ItemStatus.Resolved && Model.Status != ItemStatus.Returned)
+                    {
+                        if (hasAlreadyClaimed)
+                        {
+                            <button class="btn btn-warning rounded-pill px-4 disabled" disabled>
+                                <i class="bi bi-check-circle me-1"></i> Response Already Submitted
+                            </button>
+                        }
+                        else if (!isOwnerOrAdmin)
+                        {
+                            <a asp-controller="Claims" asp-action="Create" asp-route-itemId="@Model.Id" class="btn btn-emerald btn-lg rounded-pill px-4 shadow-sm">
+                                <i class="bi @(Model.ItemType == ItemType.Lost ? "bi-geo-alt-fill" : "bi-hand-index-thumb-fill") me-2"></i>
+                                @(Model.ItemType == ItemType.Lost ? "I Found This Item" : "Claim Ownership of this Item")
+                            </a>
+                        }
+                    }
+
+                    @if (isOwnerOrAdmin)
+                    {
+                        <a asp-controller="Items" asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-secondary rounded-pill px-3">
+                            <i class="bi bi-pencil me-1"></i> Edit
+                        </a>
+
+                        @if (Model.Status != ItemStatus.Resolved)
+                        {
+                            <form asp-controller="Items" asp-action="MarkResolved" asp-route-id="@Model.Id" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-success rounded-pill px-3">
+                                    <i class="bi bi-check2-all me-1"></i> Mark as Resolved
+                                </button>
+                            </form>
+                        }
+
+                        <button type="button" class="btn btn-outline-danger rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                            <i class="bi bi-trash me-1"></i> Delete
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Incoming Claims Section (Visible to Item Poster or Campus Admin) -->
+    @if (isOwnerOrAdmin && Model.Claims.Any())
+    {
+        <div class="card border-0 shadow-sm rounded-4 p-4 mt-5 bg-white">
+            <h4 class="fw-bold mb-1 d-flex align-items-center gap-2">
+                <i class="bi bi-file-earmark-person text-primary"></i> Submitted Ownership Claims (@Model.Claims.Count)
+            </h4>
+            <p class="text-muted small mb-3">Review history for this item, including approved and rejected claims.</p>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Claimer</th>
+                            <th>Proof Details</th>
+                            <th>Contact Phone</th>
+                            <th>Submitted Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var claim in Model.Claims)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@(claim.ClaimerUser?.FullName ?? "Student")</strong><br />
+                                    <small class="text-muted">@claim.ClaimerUser?.Email</small>
+                                </td>
+                                <td>
+                                    <div class="small text-muted" style="max-width: 300px; white-space: pre-wrap;">@claim.ProofOfOwnership</div>
+                                </td>
+                                <td>@claim.ContactPhoneNumber</td>
+                                <td>@claim.ClaimDate.ToString("MMM dd, yyyy")</td>
+                                <td>
+                                    @if (claim.Status == ClaimStatus.Pending)
+                                    {
+                                        <span class="badge bg-warning text-dark rounded-pill">Pending Review</span>
+                                    }
+                                    else if (claim.Status == ClaimStatus.Approved)
+                                    {
+                                        <span class="badge bg-success rounded-pill">Approved</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger rounded-pill">Rejected</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (claim.Status == ClaimStatus.Pending)
+                                    {
+                                        <form asp-controller="Claims" asp-action="Review" method="post">
+                                            <input type="hidden" name="claimId" value="@claim.Id" />
+                                            <textarea name="reviewNotes" class="form-control form-control-sm mb-2" rows="2" placeholder="@(Model.ItemType == ItemType.Lost ? "Confirm the finder collection location and handover instructions..." : "Tell the owner where to collect the item and how to receive the reward...")"></textarea>
+                                            <div class="d-flex gap-1">
+                                                <button type="submit" name="status" value="@ClaimStatus.Approved" class="btn btn-sm btn-success rounded-pill px-2">Approve</button>
+                                                <button type="submit" name="status" value="@ClaimStatus.Rejected" class="btn btn-sm btn-outline-danger rounded-pill px-2">Reject</button>
+                                            </div>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <small class="text-muted">Reviewed</small>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Delete Confirmation Modal -->
+@if (isOwnerOrAdmin)
+{
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-danger" id="deleteModalLabel">Confirm Delete Post</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-muted">
+                    Are you sure you want to delete <strong>@Model.Title</strong>? This operation cannot be undone.
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <form asp-controller="Items" asp-action="Delete" asp-route-id="@Model.Id" method="post">
+                        <button type="submit" class="btn btn-danger rounded-pill px-4">Delete Post</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}

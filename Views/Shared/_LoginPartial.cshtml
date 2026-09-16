@@ -1,0 +1,145 @@
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@using UniversityLostAndFound.Data
+@inject ApplicationDbContext DbContext
+
+<ul class="navbar-nav ms-auto align-items-center">
+@if (SignInManager.IsSignedIn(User))
+{
+    var user = await UserManager.GetUserAsync(User);
+    var displayName = user?.FullName ?? User.Identity?.Name ?? "User";
+    var userId = user?.Id;
+    var pendingFinderClaims = userId == null
+        ? new List<Claim>()
+        : await DbContext.Claims
+            .Include(c => c.Item)
+            .Include(c => c.ClaimerUser)
+            .Where(c => c.Item != null && c.Item.UserId == userId && c.Status == ClaimStatus.Pending)
+            .OrderByDescending(c => c.ClaimDate)
+            .Take(5)
+            .ToListAsync();
+    var reviewedMyClaims = userId == null
+        ? new List<Claim>()
+        : await DbContext.Claims
+            .Include(c => c.Item)
+            .Where(c => c.ClaimerUserId == userId && c.Status != ClaimStatus.Pending)
+            .OrderByDescending(c => c.ResolvedDate ?? c.ClaimDate)
+            .Take(5)
+            .ToListAsync();
+    var notificationCount = pendingFinderClaims.Count + reviewedMyClaims.Count;
+
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle btn btn-outline-light border-0 px-3 d-flex align-items-center gap-2" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <div class="user-avatar-sm rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px; font-size: 0.85rem;">
+                @(displayName.Length > 0 ? displayName[0].ToString().ToUpper() : "U")
+            </div>
+            <span>@displayName</span>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2" aria-labelledby="userDropdown">
+            <li>
+                <div class="dropdown-header d-flex align-items-center justify-content-between">
+                    <strong><i class="bi bi-bell me-1"></i> Notifications</strong>
+                    @if (notificationCount > 0)
+                    {
+                        <span class="badge bg-danger rounded-pill">@notificationCount</span>
+                    }
+                </div>
+            </li>
+            @if (notificationCount == 0)
+            {
+                <li><div class="dropdown-item-text small text-muted">No new claim notifications</div></li>
+            }
+            else
+            {
+                @foreach (var claim in pendingFinderClaims)
+                {
+                    <li>
+                        <a class="dropdown-item small text-wrap" asp-controller="Items" asp-action="Details" asp-route-id="@claim.ItemId">
+                            <i class="bi bi-person-check text-warning me-1"></i>
+                            <strong>New claim:</strong> @(claim.ClaimerUser?.FullName ?? "A user") claims “@claim.Item?.Title”
+                        </a>
+                    </li>
+                }
+                @foreach (var claim in reviewedMyClaims)
+                {
+                    <li>
+                        <a class="dropdown-item small text-wrap" asp-controller="Claims" asp-action="MyClaims">
+                            @if (claim.Status == ClaimStatus.Approved)
+                            {
+                                <i class="bi bi-check-circle text-success me-1"></i>
+                                <strong>Claim approved:</strong>
+                            }
+                            else
+                            {
+                                <i class="bi bi-x-circle text-danger me-1"></i>
+                                <strong>Claim rejected:</strong>
+                            }
+                            @claim.Item?.Title
+                        </a>
+                    </li>
+                }
+            }
+            <li><hr class="dropdown-divider"></li>
+            <li>
+                <div class="dropdown-header">
+                    <strong>@displayName</strong>
+                    <div class="text-muted small">@User.Identity?.Name</div>
+                </div>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+                <a class="dropdown-item d-flex align-items-center gap-2" asp-controller="Items" asp-action="Index" asp-route-status="@ItemStatus.Reported">
+                    <i class="bi bi-search text-primary"></i> Browse Catalog
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item d-flex align-items-center gap-2" asp-controller="Items" asp-action="Index" asp-route-myReports="true" asp-route-status="">
+                    <i class="bi bi-person-lines-fill text-primary"></i> My Reports
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item d-flex align-items-center gap-2" asp-controller="Claims" asp-action="MyClaims">
+                    <i class="bi bi-file-earmark-check text-success"></i> My Claims
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item d-flex align-items-center gap-2" asp-controller="Account" asp-action="Profile">
+                    <i class="bi bi-person text-info"></i> My Profile
+                </a>
+            </li>
+            @if (User.IsInRole("Admin"))
+            {
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a class="dropdown-item d-flex align-items-center gap-2 font-weight-bold text-primary" asp-controller="Admin" asp-action="Index">
+                        <i class="bi bi-speedometer2"></i> Admin Office Dashboard
+                    </a>
+                </li>
+            }
+            <li><hr class="dropdown-divider"></li>
+            <li>
+                <form class="form-inline" asp-controller="Account" asp-action="Logout" method="post" onsubmit="return confirm('Are you sure you want to log out?');">
+                    <button type="submit" class="dropdown-item d-flex align-items-center gap-2 text-danger">
+                        <i class="bi bi-box-arrow-right"></i> Log Out
+                    </button>
+                </form>
+            </li>
+        </ul>
+    </li>
+}
+else
+{
+    <li class="nav-item me-2">
+        <a class="nav-link text-light px-3" asp-controller="Account" asp-action="Login">
+            <i class="bi bi-box-arrow-in-right me-1"></i> Log In
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="btn btn-primary text-white rounded-pill px-4" asp-controller="Account" asp-action="Register">
+            <i class="bi bi-person-plus me-1"></i> Register
+        </a>
+    </li>
+}
+</ul>

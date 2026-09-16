@@ -1,0 +1,61 @@
+@model LoginViewModel
+@{
+    ViewData["Title"] = "Log In";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden bg-white">
+                <div class="bg-navy p-4 text-center text-white">
+                    <div class="brand-badge rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-2" style="width: 48px; height: 48px;">
+                        <i class="bi bi-box-arrow-in-right fs-4"></i>
+                    </div>
+                    <h3 class="fw-bold text-white mb-1">Welcome Back</h3>
+                    <p class="text-white-50 small mb-0">Log in with your university account credentials</p>
+                </div>
+                <div class="card-body p-4 p-md-5">
+                    <form asp-controller="Account" asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+                        <div class="form-floating mb-3">
+                            <input asp-for="Email" class="form-control rounded-3" placeholder="name@university.edu" />
+                            <label asp-for="Email"><i class="bi bi-envelope me-1"></i> Email Address</label>
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input asp-for="Password" class="form-control rounded-3" placeholder="Password" />
+                            <label asp-for="Password"><i class="bi bi-lock me-1"></i> Password</label>
+                            <span asp-validation-for="Password" class="text-danger small"></span>
+                        </div>
+
+                        <div class="form-check mb-4">
+                            <input asp-for="RememberMe" class="form-check-input" />
+                            <label asp-for="RememberMe" class="form-check-label text-muted small"></label>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill fw-semibold shadow-sm mb-3">
+                            Log In
+                        </button>
+
+                        <div class="text-center">
+                            <p class="text-muted small mb-0">
+                                Don't have an account? <a asp-controller="Account" asp-action="Register" class="text-accent fw-semibold text-decoration-none">Register here</a>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+                <div class="bg-light p-3 text-center border-top">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i> Demo Admin: <strong>admin@university.edu</strong> (Password: <strong>Admin123!</strong>)
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

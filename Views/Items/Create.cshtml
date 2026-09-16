@@ -1,0 +1,178 @@
+@model ItemCreateViewModel
+@{
+    var isEdit = Model.Id > 0;
+    ViewData["Title"] = isEdit ? "Edit Post" : (Model.ItemType == ItemType.Lost ? "Report Lost Item" : "Report Found Item");
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden bg-white">
+                <div class="bg-navy p-4 text-white text-center">
+                    <div class="brand-badge rounded-circle bg-gradient-primary text-white d-inline-flex align-items-center justify-content-center mb-2" style="width: 48px; height: 48px;">
+                        <i class="bi @(Model.ItemType == ItemType.Lost ? "bi-search-heart" : "bi-geo-alt-fill") fs-4"></i>
+                    </div>
+                    <h3 class="fw-bold text-white mb-1">
+                        @(isEdit ? "Edit Item Listing" : (Model.ItemType == ItemType.Lost ? "Report Lost Item" : "Report Found Item"))
+                    </h3>
+                    <p class="text-white-50 small mb-0">Provide clear details to help reuniting the owner with their belongings</p>
+                </div>
+
+                <div class="card-body p-4 p-md-5">
+                    <form asp-action="@(isEdit ? "Edit" : "Create")" method="post" enctype="multipart/form-data">
+                        @if (isEdit)
+                        {
+                            <input type="hidden" asp-for="Id" />
+                        }
+                        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+                        <!-- Post Type Toggle Switcher -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold text-muted">What are you reporting?</label>
+                            <div class="btn-group w-100 p-1 bg-light rounded-pill border" role="group">
+                                <input type="radio" class="btn-check" name="ItemType" id="typeLost" value="1" @(Model.ItemType == ItemType.Lost ? "checked" : "") />
+                                <label class="btn btn-outline-danger rounded-pill border-0 py-2 fw-semibold" for="typeLost">
+                                    <i class="bi bi-exclamation-diamond me-1"></i> I Lost Something
+                                </label>
+
+                                <input type="radio" class="btn-check" name="ItemType" id="typeFound" value="2" @(Model.ItemType == ItemType.Found ? "checked" : "") />
+                                <label class="btn btn-outline-success rounded-pill border-0 py-2 fw-semibold" for="typeFound">
+                                    <i class="bi bi-geo-alt-fill me-1"></i> I Found Something
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Title -->
+                        <div class="form-floating mb-3">
+                            <input asp-for="Title" class="form-control rounded-3" placeholder="Silver MacBook Air" />
+                            <label asp-for="Title">Item Title / Short Name <span class="text-danger">*</span></label>
+                            <span asp-validation-for="Title" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Category & Location dropdowns -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select asp-for="CategoryId" asp-items="ViewBag.Categories" class="form-select rounded-3">
+                                        <option value="">-- Select Category --</option>
+                                    </select>
+                                    <label asp-for="CategoryId">Category <span class="text-danger">*</span></label>
+                                    <span asp-validation-for="CategoryId" class="text-danger small"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select asp-for="LocationId" asp-items="ViewBag.Locations" class="form-select rounded-3">
+                                        <option value="">-- Select Campus Area --</option>
+                                    </select>
+                                    <label asp-for="LocationId">Location Lost / Found <span class="text-danger">*</span></label>
+                                    <span asp-validation-for="LocationId" class="text-danger small"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Date Lost or Found -->
+                        <div class="form-floating mb-3">
+                            <input asp-for="DateLostOrFound" type="date" class="form-control rounded-3" />
+                            <label asp-for="DateLostOrFound">Date Lost / Found <span class="text-danger">*</span></label>
+                            <span asp-validation-for="DateLostOrFound" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="form-floating mb-3">
+                            <textarea asp-for="Description" class="form-control rounded-3" style="height: 120px;" placeholder="Describe color, stickers, brand..."></textarea>
+                            <label asp-for="Description">Detailed Description & Distinct Features <span class="text-danger">*</span></label>
+                            <span asp-validation-for="Description" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Image File Upload -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold text-muted">Upload Photo (Optional)</label>
+                            <div class="file-upload-wrapper text-center">
+                                <i class="bi bi-cloud-arrow-up display-4 text-primary d-block mb-2"></i>
+                                <span class="fw-semibold d-block">Click to select photo or drag file here</span>
+                                <small class="text-muted">Supports JPG, PNG, WEBP (Max 5MB)</small>
+                                <input type="file" asp-for="ImageFile" id="imageFileInput" class="form-control mt-3" accept="image/*" />
+                            </div>
+                            <span asp-validation-for="ImageFile" class="text-danger small"></span>
+
+                            <!-- Preview -->
+                            <div id="imagePreviewContainer" class="mt-3 text-center @(string.IsNullOrEmpty(Model.ExistingImagePath) ? "d-none" : "")">
+                                <small class="text-muted d-block mb-2">Photo Preview:</small>
+                                <img id="imagePreview" src="@Model.ExistingImagePath" class="img-thumbnail rounded-3 shadow-sm" style="max-height: 200px;" alt="Preview" />
+                            </div>
+                        </div>
+
+                        <hr class="my-4" />
+                        <h6 class="fw-bold text-muted mb-3">Contact Information (Optional)</h6>
+
+                        <!-- Contact Details -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="ContactPhone" class="form-control rounded-3" placeholder="555-0199" />
+                                    <label asp-for="ContactPhone">Contact Phone Number</label>
+                                    <span asp-validation-for="ContactPhone" class="text-danger small"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="ContactEmail" class="form-control rounded-3" placeholder="email@university.edu" />
+                                    <label asp-for="ContactEmail">Contact Email Address</label>
+                                    <span asp-validation-for="ContactEmail" class="text-danger small"></span>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-floating">
+                                    <input asp-for="RewardDetails" id="rewardDetails" class="form-control rounded-3" placeholder="e.g. $20 reward if returned!" />
+                                    <label asp-for="RewardDetails" id="rewardDetailsLabel">Reward or Special Instructions (Optional)</label>
+                                    <span asp-validation-for="RewardDetails" class="text-danger small"></span>
+                                </div>
+                                <small id="rewardDetailsHelp" class="form-text text-muted">
+                                    Add a promised reward or important instructions for the person who finds your item.
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-3">
+                            <a asp-controller="Items" asp-action="Index" class="btn btn-light btn-lg w-50 rounded-pill">Cancel</a>
+                            <button type="submit" class="btn btn-primary btn-lg w-50 rounded-pill shadow-sm">
+                                @(isEdit ? "Save Changes" : "Publish Listing")
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            const typeLost = document.getElementById('typeLost');
+            const typeFound = document.getElementById('typeFound');
+            const rewardDetails = document.getElementById('rewardDetails');
+            const rewardDetailsLabel = document.getElementById('rewardDetailsLabel');
+            const rewardDetailsHelp = document.getElementById('rewardDetailsHelp');
+
+            function updateOptionalDetails() {
+                const isFound = typeFound.checked;
+                rewardDetails.placeholder = isFound
+                    ? 'e.g. Stored at the Campus Security Office until collected'
+                    : 'e.g. $20 reward if returned!';
+                rewardDetailsLabel.textContent = isFound
+                    ? 'Handover or Storage Notes (Optional)'
+                    : 'Reward or Special Instructions (Optional)';
+                rewardDetailsHelp.textContent = isFound
+                    ? 'Optional: tell the owner where the item is being kept or how to arrange a safe handover.'
+                    : 'Optional: add a promised reward or important instructions for the person who finds your item.';
+            }
+
+            typeLost.addEventListener('change', updateOptionalDetails);
+            typeFound.addEventListener('change', updateOptionalDetails);
+            updateOptionalDetails();
+        })();
+    </script>
+}
