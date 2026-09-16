@@ -57,8 +57,22 @@
                 {
                     <li>
                         <a class="dropdown-item small text-wrap" asp-controller="Items" asp-action="Details" asp-route-id="@claim.ItemId">
-                            <i class="bi bi-person-check text-warning me-1"></i>
-                            <strong>New claim:</strong> @(claim.ClaimerUser?.FullName ?? "A user") claims “@claim.Item?.Title”
+                            @if (claim.Item?.ItemType == ItemType.Lost)
+                            {
+                                <i class="bi bi-geo-alt text-success me-1"></i>
+                                <strong>New finder response:</strong>
+                                <span>@(claim.ClaimerUser?.FullName ?? "A user") found &quot;@claim.Item?.Title&quot;</span>
+                                @if (!string.IsNullOrWhiteSpace(claim.AdminOrFinderNotes))
+                                {
+                                    <span class="d-block text-muted ms-4">@(claim.AdminOrFinderNotes.Replace("Suggested collection location: ", "Collection: "))</span>
+                                }
+                            }
+                            else
+                            {
+                                <i class="bi bi-person-check text-warning me-1"></i>
+                                <strong>New ownership claim:</strong>
+                                <span>@(claim.ClaimerUser?.FullName ?? "A user") claims &quot;@claim.Item?.Title&quot;</span>
+                            }
                         </a>
                     </li>
                 }
@@ -69,14 +83,18 @@
                             @if (claim.Status == ClaimStatus.Approved)
                             {
                                 <i class="bi bi-check-circle text-success me-1"></i>
-                                <strong>Claim approved:</strong>
+                                <strong>@(claim.Item?.ItemType == ItemType.Lost ? "Finder response approved:" : "Claim approved:")</strong>
                             }
                             else
                             {
                                 <i class="bi bi-x-circle text-danger me-1"></i>
-                                <strong>Claim rejected:</strong>
+                                <strong>@(claim.Item?.ItemType == ItemType.Lost ? "Finder response rejected:" : "Claim rejected:")</strong>
                             }
                             @claim.Item?.Title
+                            @if (claim.Status == ClaimStatus.Approved && claim.Item?.ItemType == ItemType.Lost && !string.IsNullOrWhiteSpace(claim.AdminOrFinderNotes))
+                            {
+                                <span class="d-block text-muted ms-4">@(claim.AdminOrFinderNotes.Replace("Suggested collection location: ", "Collection: "))</span>
+                            }
                         </a>
                     </li>
                 }
