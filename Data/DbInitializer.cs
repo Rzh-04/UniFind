@@ -87,6 +87,32 @@ namespace UniversityLostAndFound.Data
                 await context.SaveChangesAsync();
             }
 
+            // Remove legacy accessory categories and keep their items searchable.
+            var accessoryCategories = (await context.Categories.ToListAsync())
+                .Where(c => c.Name.Contains("accessor", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            if (accessoryCategories.Count > 0)
+            {
+                var fallbackCategory = await context.Categories
+                    .FirstOrDefaultAsync(c => c.Name == "Other Personal Items");
+
+                if (fallbackCategory != null)
+                {
+                    var accessoryCategoryIds = accessoryCategories.Select(c => c.Id).ToList();
+                    var affectedItems = await context.Items
+                        .Where(i => accessoryCategoryIds.Contains(i.CategoryId))
+                        .ToListAsync();
+
+                    foreach (var item in affectedItems)
+                    {
+                        item.CategoryId = fallbackCategory.Id;
+                    }
+                }
+
+                context.Categories.RemoveRange(accessoryCategories);
+                await context.SaveChangesAsync();
+            }
+
             // 5. Seed Locations if empty
             if (!await context.Locations.AnyAsync())
             {
