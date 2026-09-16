@@ -18,8 +18,9 @@ namespace UniversityLostAndFound.ViewModels
         [StringLength(100)]
         public string? Department { get; set; }
 
-        [Display(Name = "Student / Staff ID Number")]
+        [Required(ErrorMessage = "Student ID is required.")]
         [StringLength(50)]
+        [Display(Name = "Student ID Number")]
         public string? StudentOrStaffId { get; set; }
 
         [Required(ErrorMessage = "Password is required.")]
