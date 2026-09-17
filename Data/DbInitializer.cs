@@ -12,6 +12,7 @@ namespace UniversityLostAndFound.Data
             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
 
             // Ensure database schema exists
             await context.Database.EnsureCreatedAsync();
@@ -27,7 +28,8 @@ namespace UniversityLostAndFound.Data
             }
 
             // 2. Seed Default Admin User
-            var adminEmail = "admin@university.edu";
+            var adminEmail = configuration["AdminSeed:Email"] ?? "admin@university.edu";
+            var adminPassword = configuration["AdminSeed:Password"] ?? "Admin123!";
             var adminUser = await userManager.FindByEmailAsync(adminEmail);
             if (adminUser == null)
             {
@@ -41,7 +43,7 @@ namespace UniversityLostAndFound.Data
                     StudentOrStaffId = "STAFF-1001",
                     CreatedAt = DateTime.UtcNow
                 };
-                var result = await userManager.CreateAsync(adminUser, "Admin123!");
+                var result = await userManager.CreateAsync(adminUser, adminPassword);
                 if (result.Succeeded)
                 {
                     await userManager.AddToRoleAsync(adminUser, "Admin");
@@ -49,7 +51,8 @@ namespace UniversityLostAndFound.Data
             }
 
             // 3. Seed Default Student User
-            var studentEmail = "student@university.edu";
+            var studentEmail = configuration["StudentSeed:Email"] ?? "student@university.edu";
+            var studentPassword = configuration["StudentSeed:Password"] ?? "Student123!";
             var studentUser = await userManager.FindByEmailAsync(studentEmail);
             if (studentUser == null)
             {
@@ -63,7 +66,7 @@ namespace UniversityLostAndFound.Data
                     StudentOrStaffId = "STU-2024-8891",
                     CreatedAt = DateTime.UtcNow
                 };
-                var result = await userManager.CreateAsync(studentUser, "Student123!");
+                var result = await userManager.CreateAsync(studentUser, studentPassword);
                 if (result.Succeeded)
                 {
                     await userManager.AddToRoleAsync(studentUser, "User");
