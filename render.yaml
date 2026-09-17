@@ -2,7 +2,7 @@ services:
   - type: web
     name: unifind
     runtime: docker
-    plan: starter
+    plan: free
     region: oregon
     dockerfilePath: ./Dockerfile
     healthCheckPath: /
@@ -12,9 +12,7 @@ services:
       - key: DatabaseProvider
         value: Sqlite
       - key: ConnectionStrings__DefaultConnection
-        value: Data Source=/var/data/UniversityLostAndFound.db
-      - key: UploadsPath
-        value: /var/data/uploads
+        value: Data Source=UniversityLostAndFound.db
       - key: AdminSeed__Email
         sync: false
       - key: AdminSeed__Password
@@ -23,7 +21,3 @@ services:
         sync: false
       - key: StudentSeed__Password
         sync: false
-    disk:
-      name: unifind-data
-      mountPath: /var/data
-      sizeGB: 1

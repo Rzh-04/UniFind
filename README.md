@@ -95,7 +95,7 @@ This is a university project intended for learning and demonstration. For produc
 
 ## Deploying to Render
 
-The repository includes a [`Dockerfile`](./Dockerfile) and [`render.yaml`](./render.yaml) for deployment. The Blueprint uses SQLite on a Render persistent disk so the database and uploaded images survive restarts and redeploys. The `starter` plan is required because persistent disks are not available on Render's free web service plan.
+The repository includes a [`Dockerfile`](./Dockerfile) and [`render.yaml`](./render.yaml) for deployment. The Blueprint uses the free Render web service plan with SQLite and local uploaded files.
 
 ### Before deploying
 
@@ -105,26 +105,25 @@ The repository includes a [`Dockerfile`](./Dockerfile) and [`render.yaml`](./ren
    - `AdminSeed__Password`
    - `StudentSeed__Email`
    - `StudentSeed__Password`
-3. If you need free hosting, use an external managed database and object storage instead of the included SQLite/persistent-disk setup. Render's free filesystem is temporary.
+3. The free plan has an ephemeral filesystem. The SQLite database and uploaded images can be deleted when Render restarts or redeploys the service. Use an external managed database and object storage if data must be permanent.
 
 ### Step-by-step Render deployment
 
 1. Sign in at [render.com](https://render.com) and connect the Git provider that contains this repository.
 2. Select **New +** and choose **Blueprint**.
-3. Select the repository and branch, then click **Apply**. Render reads `render.yaml`, creates the web service, and attaches the persistent disk.
+3. Select the repository and branch, then click **Apply**. Render reads `render.yaml` and creates the free web service.
 4. When Render asks for values marked **sync: false**, enter the four unique seed-account values. These become secrets in the service environment and are not stored in Git.
 5. Wait for the first Docker build and deployment to finish. The first startup creates the SQLite schema and seeds roles, categories, locations, sample items, and the two configured accounts.
 6. Open the service URL shown on the Render service page. Confirm the home page loads, register or sign in, upload an image, and verify that the image appears after refreshing the page.
 7. Sign in with the configured administrator account and immediately change its password from the profile page. Remove seeded sample items if this is a real deployment.
-8. In Render, open **Settings** and confirm the disk is mounted at `/var/data`. Never remove or recreate this disk unless you have a backup.
-9. For a custom domain, open **Settings > Custom Domains**, add the domain, create the DNS record Render shows, and wait for TLS provisioning. Then test the HTTPS URL.
+8. For a custom domain, open **Settings > Custom Domains**, add the domain, create the DNS record Render shows, and wait for TLS provisioning. Then test the HTTPS URL.
 
 ### Updating the application
 
-Push changes to the connected branch. Render rebuilds the Docker image and redeploys automatically. The persistent disk remains attached, so the SQLite database and uploaded images remain available.
+Push changes to the connected branch. Render rebuilds the Docker image and redeploys automatically. On the free plan, the SQLite database and uploaded images are not guaranteed to remain available after that redeploy.
 
 ### Important production limitations
 
-- SQLite is suitable for a small demonstration or low-traffic deployment. For multiple application instances or higher traffic, add PostgreSQL support and migrate the data.
-- Uploaded files are stored on the attached disk. Back up the disk regularly; a disk is not a substitute for backups.
+- SQLite is suitable only for a small demonstration or low-traffic deployment. For multiple application instances or higher traffic, add PostgreSQL support and migrate the data.
+- Uploaded files are stored in the container filesystem and may be lost at any time on the free plan. Use object storage for permanent uploads.
 - The application currently seeds demo data on an empty database. Review and remove sample records before inviting real users.
