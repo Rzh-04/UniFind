@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using UniversityLostAndFound.Data;
 using UniversityLostAndFound.Models;
 using UniversityLostAndFound.Services;
@@ -8,6 +9,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 // 1. Configure Database Provider (Defaults to SQLite for instant local execution without requiring LocalDB installation)
 var dbProvider = builder.Configuration.GetValue<string>("DatabaseProvider") ?? "Sqlite";
+var sqliteConnection = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? "Data Source=UniversityLostAndFound.db";
+var uploadsPath = builder.Configuration["UploadsPath"];
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
@@ -19,8 +23,6 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     }
     else
     {
-        var sqliteConnection = builder.Configuration.GetConnectionString("DefaultConnection") 
-            ?? "Data Source=UniversityLostAndFound.db";
         options.UseSqlite(sqliteConnection);
     }
 });
@@ -81,6 +83,16 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseStaticFiles();
+
+if (!string.IsNullOrWhiteSpace(uploadsPath))
+{
+    Directory.CreateDirectory(uploadsPath);
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(uploadsPath),
+        RequestPath = "/uploads"
+    });
+}
 
 app.UseRouting();
 

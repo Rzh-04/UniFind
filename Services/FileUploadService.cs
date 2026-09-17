@@ -6,11 +6,13 @@ namespace UniversityLostAndFound.Services
     public class FileUploadService : IFileUploadService
     {
         private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly IConfiguration _configuration;
         private readonly string[] _allowedExtensions = { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
 
-        public FileUploadService(IWebHostEnvironment webHostEnvironment)
+        public FileUploadService(IWebHostEnvironment webHostEnvironment, IConfiguration configuration)
         {
             _webHostEnvironment = webHostEnvironment;
+            _configuration = configuration;
         }
 
         public async Task<string?> UploadImageAsync(IFormFile? file, string folderName = "items")
@@ -27,7 +29,9 @@ namespace UniversityLostAndFound.Services
             }
 
             // Create target folder under wwwroot if it doesn't exist
-            var uploadsFolderPath = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", folderName);
+            var uploadsRoot = _configuration["UploadsPath"]
+                ?? Path.Combine(_webHostEnvironment.WebRootPath, "uploads");
+            var uploadsFolderPath = Path.Combine(uploadsRoot, folderName);
             if (!Directory.Exists(uploadsFolderPath))
             {
                 Directory.CreateDirectory(uploadsFolderPath);
@@ -50,8 +54,17 @@ namespace UniversityLostAndFound.Services
         {
             if (string.IsNullOrWhiteSpace(imagePath)) return;
 
-            var relativePath = imagePath.TrimStart('/', '\\');
-            var fullPath = Path.Combine(_webHostEnvironment.WebRootPath, relativePath);
+            var relativePath = imagePath.TrimStart('/', '\\')
+                .Replace('/', Path.DirectorySeparatorChar);
+            var uploadsRoot = _configuration["UploadsPath"]
+                ?? Path.Combine(_webHostEnvironment.WebRootPath, "uploads");
+            var uploadsPrefix = "uploads" + Path.DirectorySeparatorChar;
+            if (relativePath.StartsWith(uploadsPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                relativePath = relativePath[uploadsPrefix.Length..];
+            }
+
+            var fullPath = Path.Combine(uploadsRoot, relativePath);
 
             if (File.Exists(fullPath))
             {

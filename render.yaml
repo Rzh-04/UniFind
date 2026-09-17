@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: unifind
+    runtime: docker
+    plan: starter
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: DatabaseProvider
+        value: Sqlite
+      - key: ConnectionStrings__DefaultConnection
+        value: Data Source=/var/data/UniversityLostAndFound.db
+      - key: UploadsPath
+        value: /var/data/uploads
+      - key: AdminSeed__Email
+        sync: false
+      - key: AdminSeed__Password
+        sync: false
+      - key: StudentSeed__Email
+        sync: false
+      - key: StudentSeed__Password
+        sync: false
+    disk:
+      name: unifind-data
+      mountPath: /var/data
+      sizeGB: 1
